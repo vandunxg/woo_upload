@@ -1,7 +1,4 @@
-import { Button } from "@heroui/button";
-import { Kbd } from "@heroui/kbd";
 import { Link } from "@heroui/link";
-import { Input } from "@heroui/input";
 import {
   Navbar as HeroUINavbar,
   NavbarBrand,
@@ -9,7 +6,6 @@ import {
   NavbarItem,
 } from "@heroui/navbar";
 
-import { HeartFilledIcon, SearchIcon } from "@/components/icons";
 import { Logo } from "@/components/icons";
 
 export const Navbar = () => {
@@ -32,7 +28,7 @@ export const Navbar = () => {
         className="hidden basis-1/5 sm:flex sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden md:flex"></NavbarItem>
+        <NavbarItem className="hidden md:flex" />
       </NavbarContent>
     </HeroUINavbar>
   );

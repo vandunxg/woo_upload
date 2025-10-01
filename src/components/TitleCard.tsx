@@ -1,10 +1,11 @@
-import { usePostStore } from "@/store/postStore";
 import { Card, CardBody } from "@heroui/card";
 import { Input } from "@heroui/input";
-import React from "react";
+
+import { usePostStore } from "@/store/postStore";
 
 const TitleCard = () => {
   const { title, setField } = usePostStore();
+
   return (
     <Card className="w-full">
       <CardBody>

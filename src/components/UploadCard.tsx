@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent } from "react";
 import { Card, CardBody } from "@heroui/card";
 import { Upload } from "lucide-react";
 import { Image } from "@heroui/image";
 import { Button } from "@heroui/button";
+
 import { usePostStore } from "@/store/postStore";
 
 const UploadCard = () => {
@@ -14,18 +15,22 @@ const UploadCard = () => {
 
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+
     if (!file) return;
 
     setError(null);
 
     if (!file.type.startsWith("image/")) {
       setError("❌ Chỉ cho phép upload ảnh (jpg, png, webp...)");
+
       return;
     }
 
     const maxSizeMB = 2;
+
     if (file.size > maxSizeMB * 1024 * 1024) {
       setError(`❌ File quá lớn! Giới hạn ${maxSizeMB}MB`);
+
       return;
     }
 
@@ -39,7 +44,7 @@ const UploadCard = () => {
   };
 
   return (
-    <Card shadow="sm" className="w-full">
+    <Card className="w-full" shadow="sm">
       <CardBody>
         <div className="cursor-pointer min-h-[200px] flex justify-center items-center rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition hover:border-blue-500">
           <label className="flex flex-col items-center justify-center space-y-2">
@@ -68,8 +73,8 @@ const UploadCard = () => {
               src={preview}
             />
             <Button
-              size="sm"
               color="danger"
+              size="sm"
               variant="light"
               onPress={removeImage}
             >
