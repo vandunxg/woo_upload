@@ -37,7 +37,7 @@ export const wooApi = createApi({
       {
         name: string;
         description: string;
-        categories: number[];
+        categories: any[];
         imageId?: number;
       }
     >({

@@ -23,7 +23,7 @@ export const authApi = createApi({
         method: "POST",
         body: { username, password },
       }),
-      async onQueryStarted(arg, { queryFulfilled }) {
+      async onQueryStarted(_arg, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
 

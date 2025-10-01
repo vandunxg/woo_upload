@@ -1,5 +1,7 @@
 import type { NavigateOptions } from "react-router-dom";
 
+import { ToastProvider } from "@heroui/toast";
+
 import { HeroUIProvider } from "@heroui/system";
 import { useHref, useNavigate } from "react-router-dom";
 
@@ -14,6 +16,7 @@ export function ProviderCustom({ children }: { children: React.ReactNode }) {
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
+      <ToastProvider />
       {children}
     </HeroUIProvider>
   );

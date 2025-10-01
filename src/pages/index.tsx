@@ -1,3 +1,5 @@
+import { addToast } from "@heroui/toast";
+
 import { Button } from "@heroui/button";
 
 import DefaultLayout from "@/layouts/default";
@@ -27,6 +29,7 @@ export default function IndexPage() {
       // 1. Upload image nếu có
       if (image) {
         const imageRes = await uploadImage(image).unwrap();
+
         imageId = imageRes.id;
       }
 
@@ -34,7 +37,7 @@ export default function IndexPage() {
       await createProduct({
         name: title,
         description,
-        categories: categories.map((id) => ({ id })), // đảm bảo đúng format Woo
+        categories: categories.map((id) => ({ id })),
         imageId,
       }).unwrap();
 
@@ -44,7 +47,10 @@ export default function IndexPage() {
       // 4. Scroll to top sau khi submit
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      console.error("❌ Create product error:", err);
+      addToast({
+        title: (err as Error).message,
+        color: "danger",
+      });
     }
   };
 
