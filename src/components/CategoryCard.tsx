@@ -13,6 +13,7 @@ export default function CategoryCard() {
   const [query, setQuery] = useState("");
   const [categories, setCategories] = useState<any[]>([]);
   const [selected, setSelected] = useState<number[]>([]);
+  const { empty } = usePostStore();
 
   useEffect(() => {
     const normalize = (str: string) =>
@@ -34,6 +35,14 @@ export default function CategoryCard() {
       categories: selected, // lưu sẵn dạng object
     });
   }, [selected]);
+
+  useEffect(() => {
+    if (empty) {
+      setQuery("");
+      setSearch("");
+      setSelected([]);
+    }
+  }, [empty]);
 
   return (
     <Card className="w-full">

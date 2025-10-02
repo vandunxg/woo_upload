@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, ChangeEvent } from "react";
-import { Card, CardBody } from "@heroui/card";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Upload } from "lucide-react";
 import { Image } from "@heroui/image";
 import { Button } from "@heroui/button";
@@ -45,6 +45,9 @@ const UploadCard = () => {
 
   return (
     <Card className="w-full" shadow="sm">
+      <CardHeader>
+        <h3 className="text-lg font-semibold">Upload Image</h3>
+      </CardHeader>
       <CardBody>
         <div className="cursor-pointer min-h-[200px] flex justify-center items-center rounded-lg border-2 border-dashed border-gray-300 p-6 text-center transition hover:border-blue-500">
           <label className="flex flex-col items-center justify-center space-y-2">

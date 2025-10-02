@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { cn } from "@/lib/utils";
+import { cn, pushNotification } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -27,9 +27,10 @@ export function LoginForm({
     e.preventDefault();
     try {
       await login({ username, password }).unwrap();
+      pushNotification("Login successfully", "success");
       navigate("/");
     } catch {
-      alert("❌ Login failed");
+      pushNotification("Login failed", "danger");
     }
   };
 

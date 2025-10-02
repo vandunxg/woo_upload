@@ -1,5 +1,3 @@
-import { addToast } from "@heroui/toast";
-
 import { Button } from "@heroui/button";
 
 import DefaultLayout from "@/layouts/default";
@@ -12,6 +10,7 @@ import {
   useCreateProductMutation,
   useUploadImageMutation,
 } from "@/services/wooApi";
+import { pushNotification } from "@/lib/utils";
 
 export default function IndexPage() {
   const { title, description, image, categories, reset } = usePostStore();
@@ -44,13 +43,12 @@ export default function IndexPage() {
       // 3. Reset form store
       reset();
 
+      pushNotification("Created successfully", "success");
+
       // 4. Scroll to top sau khi submit
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      addToast({
-        title: (err as Error).message,
-        color: "danger",
-      });
+      pushNotification((err as Error).message, "danger");
     }
   };
 

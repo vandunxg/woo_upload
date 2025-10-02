@@ -6,6 +6,7 @@ type PostFormData = {
   description: string;
   image: File | null;
   categories: number[];
+  empty: boolean;
 };
 
 type PostStore = PostFormData & {
@@ -21,6 +22,7 @@ export const usePostStore = create<PostStore>((set) => ({
   description: "",
   image: null,
   categories: [],
+  empty: false,
   setField: (key, value) => set((state) => ({ ...state, [key]: value })),
   reset: () =>
     set({
@@ -28,5 +30,6 @@ export const usePostStore = create<PostStore>((set) => ({
       description: "",
       image: null,
       categories: [],
+      empty: true,
     }),
 }));
