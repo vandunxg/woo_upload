@@ -22,17 +22,40 @@ export default function IndexPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // validate
+    if (!image) {
+      pushNotification("Image is required", "danger");
+
+      return;
+    }
+
+    if (!title) {
+      pushNotification("Title is required", "danger");
+
+      return;
+    }
+
+    if (categories.length === 0) {
+      pushNotification("Please select at least one category", "danger");
+
+      return;
+    }
+
+    if (!description) {
+      pushNotification("Description is required", "danger");
+
+      return;
+    }
+
     try {
       let imageId: number | undefined;
 
-      // 1. Upload image nếu có
       if (image) {
         const imageRes = await uploadImage(image).unwrap();
 
         imageId = imageRes.id;
       }
 
-      // 2. Create product
       await createProduct({
         name: title,
         description,
@@ -40,12 +63,10 @@ export default function IndexPage() {
         imageId,
       }).unwrap();
 
-      // 3. Reset form store
       reset();
 
       pushNotification("Created successfully", "success");
 
-      // 4. Scroll to top sau khi submit
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       pushNotification((err as Error).message, "danger");
