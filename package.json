@@ -24,7 +24,7 @@
     "@heroui/snippet": "2.2.27",
     "@heroui/switch": "2.2.23",
     "@heroui/system": "2.4.22",
-    "@heroui/theme": "2.4.22",
+    "@heroui/theme": "2.4.25",
     "@heroui/toast": "^2.0.16",
     "@heroui/use-theme": "2.1.10",
     "@radix-ui/react-label": "^2.1.7",
