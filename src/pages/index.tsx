@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@heroui/button";
 
 import DefaultLayout from "@/layouts/default";
@@ -14,6 +15,7 @@ import {
 import { pushNotification } from "@/lib/utils";
 
 export default function IndexPage() {
+  const [jsonImportKey, setJsonImportKey] = useState(0);
   const { title, description, image, categories, reset } = usePostStore();
 
   const [uploadImage, { isLoading: loadingUploadImage }] =
@@ -64,7 +66,9 @@ export default function IndexPage() {
         imageId,
       }).unwrap();
 
+
       reset();
+      setJsonImportKey((prev) => prev + 1);
 
       pushNotification("Created successfully", "success");
 
@@ -81,6 +85,7 @@ export default function IndexPage() {
         onSubmit={handleSubmit}
       >
         <JsonImport
+          key={jsonImportKey}
           onImport={(data) => {
             usePostStore.setState({
               title: data.title,

@@ -44,7 +44,6 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
 
   const handleImport = () => {
 
-
     const { title, content, hashtag } = jsonData as any;
 
     if (!title || !content) {
@@ -79,7 +78,6 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
       categories: uniqueCategories,
     });
     
-    pushNotification("Imported successfully", "success");
   };
 
   return (
