@@ -62,11 +62,39 @@ export default function CategoryCard() {
           </Button>
         </div>
 
+        {/* Display Selected Categories */}
+        {categories.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <h4 className="text-sm font-semibold">Selected Categories:</h4>
+             {CATEGORY_DATA.filter((c) => categories.includes(c.id)).map((c) => (
+                <Button
+                  key={c.id}
+                  className="w-full justify-start"
+                  color="primary"
+                  size="md"
+                  variant="solid"
+                  onPress={() => {
+                      // Allow unselecting from here
+                      handleSelection(
+                        categories.filter((id) => id !== c.id && id !== c.parent),
+                      );
+                  }}
+                >
+                  {c.name}
+                </Button>
+             ))}
+          </div>
+        )}
+
+        {/* Search Results */}
         <div className="flex flex-col gap-2">
           {query &&
             filteredCategories?.map((c: any) => {
               const isSelected = categories.includes(c.id);
-
+              // Optional: Don't show if already shown above?
+              // For now, let's keep simplistic. If it's already selected, it will show as "Selected" style in the search list too.
+              // But strictly speaking if I show a "Selected" list, maybe I don't need to highlight them in search or just leave it.
+              
               return (
                 <Button
                   key={c.id}
@@ -76,12 +104,10 @@ export default function CategoryCard() {
                   variant={isSelected ? "solid" : "bordered"}
                   onPress={() => {
                     if (isSelected) {
-                      // Bỏ chọn => chỉ lọc ra những id khác
                       handleSelection(
                         categories.filter((id) => id !== c.id && id !== c.parent),
                       );
                     } else {
-                      // Thêm cả id và parent, loại bỏ trùng bằng Set
                       handleSelection([
                         ...new Set([...categories, c.id, c.parent]),
                       ]);
