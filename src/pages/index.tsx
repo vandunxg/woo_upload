@@ -5,6 +5,7 @@ import CategoryCard from "@/components/CategoryCard";
 import UploadCard from "@/components/UploadCard";
 import DescriptionCard from "@/components/DescriptionCard";
 import TitleCard from "@/components/TitleCard";
+import JsonImport from "./JsonImport";
 import { usePostStore } from "@/store/postStore";
 import {
   useCreateProductMutation,
@@ -79,6 +80,16 @@ export default function IndexPage() {
         className="flex flex-col items-center justify-center gap-4 py-8 md:py-10"
         onSubmit={handleSubmit}
       >
+        <JsonImport
+          onImport={(data) => {
+            usePostStore.setState({
+              title: data.title,
+              description: data.description,
+              categories: data.categories,
+              empty: false,
+            });
+          }}
+        />
         <TitleCard />
         <DescriptionCard />
         <UploadCard />

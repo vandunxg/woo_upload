@@ -12,6 +12,15 @@ type Category = {
   parent: number;
 };
 
+interface WPUser {
+  id: number;
+  name: string;
+  email?: string;
+  roles: string[];
+  slug: string;
+  avatar_urls?: Record<string, string>;
+}
+
 export const wooApi = createApi({
   reducerPath: "wooApi",
   baseQuery,
@@ -30,7 +39,10 @@ export const wooApi = createApi({
         };
       },
     }),
-
+    // Get authenticated user
+    getAuthenticatedUser: builder.query<WPUser, void>({
+      query: () => `wp/v2/users/me`,
+    }),
     // Create Product
     createProduct: builder.mutation<
       any,
@@ -94,4 +106,5 @@ export const {
   useUploadImageMutation,
   useCreateProductMutation,
   useGetCategorySiblingsQuery,
+  useGetAuthenticatedUserQuery,
 } = wooApi;

@@ -1,7 +1,20 @@
 import { Link } from "@heroui/link";
 import { GalleryVerticalEnd } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
+import { useAuthStore } from "@/store/authStore.ts";
 
 export default function AuthLayout({ children }: any) {
+  const navigate = useNavigate();
+  const token = useAuthStore((state) => state.token);
+
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Navbar } from "@/components/navbar";
 import { useAuthStore } from "@/store/authStore";
+import {useGetAuthenticatedUserQuery} from "@/services/wooApi.ts";
 
 export default function DefaultLayout({
   children,
@@ -11,11 +12,13 @@ export default function DefaultLayout({
 }) {
   const navigate = useNavigate();
   const token = useAuthStore((state) => state.token);
+  const { data } = useGetAuthenticatedUserQuery();
 
   useEffect(() => {
     if (!token) {
       navigate("/login");
     }
+    console.log({ data });
   }, [token, navigate]);
 
   return (

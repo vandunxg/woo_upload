@@ -11,9 +11,8 @@ import { usePostStore } from "@/store/postStore";
 export default function CategoryCard() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [categories, setCategories] = useState<any[]>([]);
-  const [selected, setSelected] = useState<number[]>([]);
-  const { empty } = usePostStore();
+  const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
+  const { empty, categories, setField } = usePostStore();
 
   useEffect(() => {
     const normalize = (str: string) =>
@@ -23,7 +22,7 @@ export default function CategoryCard() {
         .toLowerCase()
         .trim();
 
-    setCategories(
+    setFilteredCategories(
       CATEGORY_DATA.filter((item) =>
         normalize(item.name).includes(normalize(query)),
       ),
@@ -31,18 +30,15 @@ export default function CategoryCard() {
   }, [query]);
 
   useEffect(() => {
-    usePostStore.setState({
-      categories: selected, // lưu sẵn dạng object
-    });
-  }, [selected]);
-
-  useEffect(() => {
     if (empty) {
       setQuery("");
       setSearch("");
-      setSelected([]);
     }
   }, [empty]);
+
+  const handleSelection = (newSelected: number[]) => {
+      setField("categories", newSelected);
+  };
 
   return (
     <Card className="w-full">
@@ -60,7 +56,6 @@ export default function CategoryCard() {
           <Button
             onPress={() => {
               setQuery(search.trim());
-              setSelected([]);
             }}
           >
             Search
@@ -69,8 +64,8 @@ export default function CategoryCard() {
 
         <div className="flex flex-col gap-2">
           {query &&
-            categories?.map((c: any) => {
-              const isSelected = selected.includes(c.id);
+            filteredCategories?.map((c: any) => {
+              const isSelected = categories.includes(c.id);
 
               return (
                 <Button
@@ -82,13 +77,13 @@ export default function CategoryCard() {
                   onPress={() => {
                     if (isSelected) {
                       // Bỏ chọn => chỉ lọc ra những id khác
-                      setSelected(
-                        selected.filter((id) => id !== c.id && id !== c.parent),
+                      handleSelection(
+                        categories.filter((id) => id !== c.id && id !== c.parent),
                       );
                     } else {
                       // Thêm cả id và parent, loại bỏ trùng bằng Set
-                      setSelected((prev) => [
-                        ...new Set([...prev, c.id, c.parent]),
+                      handleSelection([
+                        ...new Set([...categories, c.id, c.parent]),
                       ]);
                     }
                   }}
@@ -99,10 +94,10 @@ export default function CategoryCard() {
             })}
         </div>
 
-        {selected.length > 0 && (
-          <div className="text-sm text-neutral-600">
-            Selected IDs: {selected.join(", ")}
-          </div>
+        {categories.length > 0 && (
+            <div className="text-sm text-neutral-600">
+            Selected IDs: {categories.join(", ")}
+            </div>
         )}
       </CardBody>
     </Card>
