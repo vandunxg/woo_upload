@@ -1157,7 +1157,7 @@ export const CATEGORY_DATA = [
   },
   {
     id: 163,
-    name: "Đo Lường &amp; Cảm Biến",
+    name: "Đo Lường & Cảm Biến",
     slug: "do-luong-cam-bien",
     parent: 0,
     description: "",
