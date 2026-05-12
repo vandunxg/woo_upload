@@ -6,11 +6,11 @@
 
 ## 🚀 Tech Stack
 
-* ⚛️ **React + TypeScript + Vite**
-* 🎨 **Tailwind CSS + HeroUI**
-* 🧠 **Zustand** (state management)
-* 🔐 **JWT Authentication** (WordPress REST API)
-* 🧩 **Axios** (API client)
+- ⚛️ **React + TypeScript + Vite**
+- 🎨 **Tailwind CSS + HeroUI**
+- 🧠 **Zustand** (state management)
+- 🔐 **JWT Authentication** (WordPress REST API)
+- 🧩 **Axios** (API client)
 
 ---
 
@@ -36,38 +36,35 @@ Mở trình duyệt tại:
 ## 🔐 Quy trình hoạt động
 
 1. **Đăng nhập JWT:**
-
-    * Gửi `POST /wp-json/jwt-auth/v1/token` với username + password.
-    * Nhận `token` → lưu trong Zustand + localStorage.
+   - Gửi `POST /wp-json/jwt-auth/v1/token` với username + password.
+   - Nhận `token` → lưu trong Zustand + localStorage.
 
 2. **Upload hình ảnh:**
-
-    * Gửi `POST /wp-json/wp/v2/media` với Header `Authorization: Bearer <token>`.
-    * Nhận `mediaId` để gắn vào sản phẩm.
+   - Gửi `POST /wp-json/wp/v2/media` với Header `Authorization: Bearer <token>`.
+   - Nhận `mediaId` để gắn vào sản phẩm.
 
 3. **Tạo sản phẩm:**
-
-    * Gửi `POST /wp-json/wc/v3/products` với JSON gồm `name`, `description`, `categories`, `images`, `price`, v.v.
+   - Gửi `POST /wp-json/wc/v3/products` với JSON gồm `name`, `description`, `categories`, `images`, `price`, v.v.
 
 ---
 
 ## 🧠 Tính năng chính
 
-* ✅ Đăng nhập / lưu JWT token tự động.
-* 🖼️ Upload ảnh lên media library của WP.
-* 🧾 Form tạo sản phẩm (tên, mô tả, danh mục, ảnh, giá...)
-* 🔄 Tự động gắn danh mục cha - con.
-* ⚡ UI nhẹ, responsive (HeroUI + Tailwind).
-* 🧩 State management đơn giản, dễ mở rộng (Zustand).
+- ✅ Đăng nhập / lưu JWT token tự động.
+- 🖼️ Upload ảnh lên media library của WP.
+- 🧾 Form tạo sản phẩm (tên, mô tả, danh mục, ảnh, giá...)
+- 🔄 Tự động gắn danh mục cha - con.
+- ⚡ UI nhẹ, responsive (HeroUI + Tailwind).
+- 🧩 State management đơn giản, dễ mở rộng (Zustand).
 
 ---
 
 ## 🧪 Cấu hình WordPress cần có
 
-* WordPress >= 6.0
-* WooCommerce >= 8.0
-* Plugin JWT Authentication for WP-API
-  *(Cần chỉnh `.htaccess` hoặc Nginx để bật header `Authorization`)*
+- WordPress >= 6.0
+- WooCommerce >= 8.0
+- Plugin JWT Authentication for WP-API
+  _(Cần chỉnh `.htaccess` hoặc Nginx để bật header `Authorization`)_
 
 Ví dụ `.htaccess`:
 
@@ -104,6 +101,7 @@ Output build sẽ nằm trong thư mục `dist/`.
 
 **Nguyễn Văn Dũng**
 📧 [vandunxg@duck.com](mailto:vandunxg@duck.com)
+
 ---
 
 ## 🪪 Giấy phép

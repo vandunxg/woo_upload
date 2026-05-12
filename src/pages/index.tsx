@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@heroui/button";
+
+import JsonImport from "./JsonImport";
 
 import DefaultLayout from "@/layouts/default";
 import CategoryCard from "@/components/CategoryCard";
 import UploadCard from "@/components/UploadCard";
 import DescriptionCard from "@/components/DescriptionCard";
 import TitleCard from "@/components/TitleCard";
-import JsonImport from "./JsonImport";
+import { useSiteCategories } from "@/hooks/useSiteCategories";
 import { usePostStore } from "@/store/postStore";
 import {
   useCreateProductMutation,
@@ -16,7 +18,18 @@ import { pushNotification } from "@/lib/utils";
 
 export default function IndexPage() {
   const [jsonImportKey, setJsonImportKey] = useState(0);
-  const { title, description, image, categories, reset } = usePostStore();
+  const { categories: siteCategories } = useSiteCategories();
+  const {
+    title,
+    description,
+    image,
+    categories: selectedCategoryIds,
+    reset,
+  } = usePostStore();
+  const categoriesById = useMemo(
+    () => new Map(siteCategories.map((category) => [category.id, category])),
+    [siteCategories],
+  );
 
   const [uploadImage, { isLoading: loadingUploadImage }] =
     useUploadImageMutation();
@@ -38,7 +51,7 @@ export default function IndexPage() {
       return;
     }
 
-    if (categories.length === 0) {
+    if (selectedCategoryIds.length === 0) {
       pushNotification("Please select at least one category", "danger");
 
       return;
@@ -52,6 +65,15 @@ export default function IndexPage() {
 
     try {
       let imageId: number | undefined;
+      const categoryIds = new Set<number>(selectedCategoryIds);
+
+      selectedCategoryIds.forEach((categoryId) => {
+        const parentId = categoriesById.get(categoryId)?.parent;
+
+        if (parentId) {
+          categoryIds.add(parentId);
+        }
+      });
 
       if (image) {
         const imageRes = await uploadImage(image).unwrap();
@@ -62,10 +84,9 @@ export default function IndexPage() {
       await createProduct({
         name: title,
         description,
-        categories: categories.map((id) => ({ id })),
+        categories: [...categoryIds].map((id) => ({ id })),
         imageId,
       }).unwrap();
-
 
       reset();
       setJsonImportKey((prev) => prev + 1);

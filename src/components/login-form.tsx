@@ -1,7 +1,10 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { cn, pushNotification } from "@/lib/utils";
+import { useLoginMutation } from "@/services/authApi";
+import { useLazyGetProductCategoriesQuery } from "@/services/wooApi";
+import { useSiteStore } from "@/store/siteStore";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,21 +15,102 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useLoginMutation } from "@/services/authApi";
+
+type SiteMode = "saved" | "new";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const navigate = useNavigate();
+  const sites = useSiteStore((state) => state.sites);
+  const activeSiteId = useSiteStore((state) => state.activeSiteId);
+  const upsertSite = useSiteStore((state) => state.upsertSite);
+  const setActiveSite = useSiteStore((state) => state.setActiveSite);
+
+  const [selectedSiteId, setSelectedSiteId] = useState<string>("");
+  const [siteMode, setSiteMode] = useState<SiteMode>("new");
+  const [siteName, setSiteName] = useState("");
+  const [siteUrl, setSiteUrl] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [login, { isLoading }] = useLoginMutation();
-  const navigate = useNavigate();
+  const [fetchCategories] = useLazyGetProductCategoriesQuery();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (!sites.length) {
+      setSelectedSiteId("");
+      setSiteMode("new");
+
+      return;
+    }
+
+    const nextSelectedSiteId =
+      activeSiteId && sites.some((site) => site.id === activeSiteId)
+        ? activeSiteId
+        : sites[0].id;
+
+    setSelectedSiteId(nextSelectedSiteId);
+    setSiteMode("saved");
+  }, [activeSiteId, sites]);
+
+  const resolveSiteId = () => {
+    if (siteMode === "saved") {
+      if (!selectedSiteId) {
+        pushNotification("Please choose a saved website", "danger");
+
+        return null;
+      }
+
+      setActiveSite(selectedSiteId);
+
+      return selectedSiteId;
+    }
+
+    if (!siteUrl.trim()) {
+      pushNotification("Website URL is required", "danger");
+
+      return null;
+    }
+
+    const createdSite = upsertSite({
+      name: siteName,
+      baseUrl: siteUrl,
+    });
+
+    if (!createdSite) {
+      pushNotification("Website URL is invalid", "danger");
+
+      return null;
+    }
+
+    setActiveSite(createdSite.id);
+    setSelectedSiteId(createdSite.id);
+    setSiteMode("saved");
+    setSiteUrl("");
+    setSiteName("");
+
+    return createdSite.id;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const siteId = resolveSiteId();
+
+    if (!siteId) {
+      return;
+    }
+
     try {
-      await login({ username, password }).unwrap();
+      await login({
+        siteId,
+        username,
+        password,
+      }).unwrap();
+
+      fetchCategories({ siteId });
+
       pushNotification("Login successfully", "success");
       navigate("/");
     } catch {
@@ -38,71 +122,114 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
+          <CardTitle className="text-xl">Connect to WordPress</CardTitle>
           <CardDescription>
-            Login with your Apple or Google account
+            Login with a saved website or add a new website.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <div className="grid gap-6">
-              <div className="flex flex-col gap-4">
-                <Button className="w-full" variant="outline">
-                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
-                      fill="currentColor"
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label>Website</Label>
+                <div className="grid grid-cols-2 gap-2 rounded-md border p-1">
+                  <Button
+                    type="button"
+                    variant={siteMode === "saved" ? "default" : "ghost"}
+                    disabled={sites.length === 0}
+                    onClick={() => setSiteMode("saved")}
+                  >
+                    Saved
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={siteMode === "new" ? "default" : "ghost"}
+                    onClick={() => setSiteMode("new")}
+                  >
+                    Add New
+                  </Button>
+                </div>
+              </div>
+
+              {siteMode === "saved" ? (
+                <div className="grid gap-2">
+                  <Label htmlFor="site-select">Saved websites</Label>
+                  <select
+                    id="site-select"
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    value={selectedSiteId}
+                    onChange={(event) => setSelectedSiteId(event.target.value)}
+                  >
+                    <option value="">Select website</option>
+                    {sites.map((site) => (
+                      <option key={site.id} value={site.id}>
+                        {site.name} ({site.baseUrl})
+                      </option>
+                    ))}
+                  </select>
+                  {sites.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      No saved website yet. Switch to "Add New".
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-md border p-3">
+                  <p className="mb-3 text-sm font-medium">Add new website</p>
+                  <div className="grid gap-3">
+                    <Input
+                      id="site-name"
+                      placeholder="Site name (optional)"
+                      type="text"
+                      value={siteName}
+                      onChange={(event) => setSiteName(event.target.value)}
                     />
-                  </svg>
-                  Login with Google
-                </Button>
-              </div>
-              <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-                <span className="relative z-10 bg-background px-2 text-muted-foreground">
-                  Or continue with
-                </span>
-              </div>
-              <div className="grid gap-6">
-                <div className="grid gap-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    required
-                    id="username"
-                    placeholder="johnalex"
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
+                    <Input
+                      id="site-url"
+                      placeholder="example.com or https://example.com"
+                      type="text"
+                      value={siteUrl}
+                      onChange={(event) => setSiteUrl(event.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="grid gap-2">
-                  <Input
-                    required
-                    id="password"
-                    placeholder="*********"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                </div>
-                <Button className="w-full" disabled={isLoading} type="submit">
-                  {isLoading ? "Loading..." : "Login"}
-                </Button>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  required
+                  id="username"
+                  placeholder="admin"
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                />
               </div>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link className="underline underline-offset-4" to="#">
-                  Sign up
-                </Link>
+
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  required
+                  id="password"
+                  placeholder="********"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
               </div>
+
+              <Button className="w-full" disabled={isLoading} type="submit">
+                {isLoading
+                  ? "Loading..."
+                  : siteMode === "new"
+                    ? "Add Website & Login"
+                    : "Login"}
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
-        By clicking continue, you agree to our{" "}
-        <Link to="#">Terms of Service</Link> and{" "}
-        <Link to="#">Privacy Policy</Link>.
-      </div>
     </div>
   );
 }

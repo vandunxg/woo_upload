@@ -16,18 +16,18 @@ export const authApi = createApi({
         user_display_name: string;
         user_id: number;
       },
-      { username: string; password: string }
+      { siteId: string; username: string; password: string }
     >({
       query: ({ username, password }) => ({
         url: "/jwt-auth/v1/token",
         method: "POST",
         body: { username, password },
       }),
-      async onQueryStarted(_arg, { queryFulfilled }) {
+      async onQueryStarted(arg, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
 
-          useAuthStore.getState().setAuth(data.token, {
+          useAuthStore.getState().setAuth(arg.siteId, data.token, {
             id: data.user_id,
             email: data.user_email,
             username: data.user_display_name,

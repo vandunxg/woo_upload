@@ -1,43 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
+import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
-import { Button } from "@heroui/button";
 
-import { CATEGORY_DATA } from "@/lib/utils";
+import { useSiteCategories } from "@/hooks/useSiteCategories";
 import { usePostStore } from "@/store/postStore";
+
+const normalize = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
+const toggleCategorySelection = (selectedIds: number[], categoryId: number) => {
+  if (selectedIds.includes(categoryId)) {
+    return selectedIds.filter((id) => id !== categoryId);
+  }
+
+  return [...selectedIds, categoryId];
+};
 
 export default function CategoryCard() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const [filteredCategories, setFilteredCategories] = useState<any[]>([]);
-  const { empty, categories, setField } = usePostStore();
+  const { categories, isLoading, isFetching } = useSiteCategories();
+  const selectedCategoryIds = usePostStore((state) => state.categories);
+  const setField = usePostStore((state) => state.setField);
 
-  useEffect(() => {
-    const normalize = (str: string) =>
-      str
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
-
-    setFilteredCategories(
-      CATEGORY_DATA.filter((item) =>
-        normalize(item.name).includes(normalize(query)),
+  const selectedCategories = useMemo(
+    () =>
+      categories.filter((category) =>
+        selectedCategoryIds.includes(category.id),
       ),
-    );
-  }, [query]);
+    [categories, selectedCategoryIds],
+  );
 
-  useEffect(() => {
-    if (empty) {
-      setQuery("");
-      setSearch("");
+  const filteredCategories = useMemo(() => {
+    if (!query) {
+      return [];
     }
-  }, [empty]);
 
-  const handleSelection = (newSelected: number[]) => {
-      setField("categories", newSelected);
+    const normalizedQuery = normalize(query);
+
+    return categories.filter((category) =>
+      normalize(category.name).includes(normalizedQuery),
+    );
+  }, [categories, query]);
+
+  const handleSelection = (nextSelected: number[]) => {
+    setField("categories", nextSelected);
   };
 
   return (
@@ -51,79 +65,66 @@ export default function CategoryCard() {
           <Input
             placeholder="Type category name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(event) => setSearch(event.target.value)}
           />
-          <Button
-            onPress={() => {
-              setQuery(search.trim());
-            }}
-          >
-            Search
-          </Button>
+          <Button onPress={() => setQuery(search.trim())}>Search</Button>
         </div>
 
-        {/* Display Selected Categories */}
-        {categories.length > 0 && (
+        {isLoading && (
+          <p className="text-sm text-neutral-500">Loading categories...</p>
+        )}
+
+        {selectedCategories.length > 0 && (
           <div className="flex flex-col gap-2">
             <h4 className="text-sm font-semibold">Selected Categories:</h4>
-             {CATEGORY_DATA.filter((c) => categories.includes(c.id)).map((c) => (
-                <Button
-                  key={c.id}
-                  className="w-full justify-start"
-                  color="primary"
-                  size="md"
-                  variant="solid"
-                  onPress={() => {
-                      // Allow unselecting from here
-                      handleSelection(
-                        categories.filter((id) => id !== c.id && id !== c.parent),
-                      );
-                  }}
-                >
-                  {c.name}
-                </Button>
-             ))}
+            {selectedCategories.map((category) => (
+              <Button
+                key={category.id}
+                className="w-full justify-start"
+                color="primary"
+                size="md"
+                variant="solid"
+                onPress={() =>
+                  handleSelection(
+                    toggleCategorySelection(selectedCategoryIds, category.id),
+                  )
+                }
+              >
+                {category.name}
+              </Button>
+            ))}
           </div>
         )}
 
-        {/* Search Results */}
         <div className="flex flex-col gap-2">
           {query &&
-            filteredCategories?.map((c: any) => {
-              const isSelected = categories.includes(c.id);
-              // Optional: Don't show if already shown above?
-              // For now, let's keep simplistic. If it's already selected, it will show as "Selected" style in the search list too.
-              // But strictly speaking if I show a "Selected" list, maybe I don't need to highlight them in search or just leave it.
-              
+            filteredCategories.map((category) => {
+              const isSelected = selectedCategoryIds.includes(category.id);
+
               return (
                 <Button
-                  key={c.id}
+                  key={category.id}
                   className="w-full justify-start"
                   color={isSelected ? "primary" : "default"}
                   size="md"
                   variant={isSelected ? "solid" : "bordered"}
                   onPress={() => {
-                    if (isSelected) {
-                      handleSelection(
-                        categories.filter((id) => id !== c.id && id !== c.parent),
-                      );
-                    } else {
-                      handleSelection([
-                        ...new Set([...categories, c.id, c.parent]),
-                      ]);
-                    }
+                    handleSelection(
+                      toggleCategorySelection(selectedCategoryIds, category.id),
+                    );
                   }}
                 >
-                  {c.name}
+                  {category.name}
                 </Button>
               );
             })}
         </div>
 
-        {categories.length > 0 && (
-            <div className="text-sm text-neutral-600">
-            Selected IDs: {categories.join(", ")}
-            </div>
+        {selectedCategoryIds.length > 0 && (
+          <div className="text-sm text-neutral-600">
+            Selected IDs: {selectedCategoryIds.join(", ")}
+            {isFetching ? " (syncing...)" : ""}
+          </div>
         )}
       </CardBody>
     </Card>

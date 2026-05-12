@@ -1,9 +1,14 @@
-import { useState } from "react";
-import { JsonEditor } from "json-edit-react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { Button } from "@heroui/button";
-import { CATEGORY_DATA, pushNotification } from "@/lib/utils";
-import { Textarea } from "@heroui/input";
 import { Card, CardBody, CardFooter } from "@heroui/card";
+import { Textarea } from "@heroui/input";
+
+import { useSiteCategories } from "@/hooks/useSiteCategories";
+import { pushNotification } from "@/lib/utils";
+
+const JsonEditor = lazy(() =>
+  import("json-edit-react").then((module) => ({ default: module.JsonEditor })),
+);
 
 interface JsonImportProps {
   onImport: (data: {
@@ -13,87 +18,116 @@ interface JsonImportProps {
   }) => void;
 }
 
+const normalize = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+
 const JsonImport = ({ onImport }: JsonImportProps) => {
+  const { categories } = useSiteCategories();
   const [jsonData, setJsonData] = useState({
     title: "Title",
     content: "Content",
     hashtag: "Hashtag",
   });
+  const [rawJson, setRawJson] = useState("");
+
+  const normalizedCategories = useMemo(
+    () =>
+      categories.map((category) => ({
+        ...category,
+        normalizedName: normalize(category.name),
+      })),
+    [categories],
+  );
 
   const findCategoryByHashtag = (hashtag: string) => {
-    if (!hashtag) return null;
-    const normalize = (str: string) =>
-      str
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .trim();
+    if (!hashtag) {
+      return null;
+    }
+
     const normalizedHashtag = normalize(hashtag);
-    
-    // Try exact match first (normalized)
-    const exact = CATEGORY_DATA.find(
-      (c) => normalize(c.name) === normalizedHashtag
+
+    const exactMatch = normalizedCategories.find(
+      (category) => category.normalizedName === normalizedHashtag,
     );
-    if (exact) return exact;
-    // Try includes
-    const found = CATEGORY_DATA.find((c) =>
-      normalize(c.name).includes(normalizedHashtag)
+
+    if (exactMatch) {
+      return exactMatch;
+    }
+
+    return (
+      normalizedCategories.find((category) =>
+        category.normalizedName.includes(normalizedHashtag),
+      ) ?? null
     );
-    return found || null;
   };
 
   const handleImport = () => {
-
-    const { title, content, hashtag } = jsonData as any;
+    const { title, content, hashtag } = jsonData;
 
     if (!title || !content) {
-        pushNotification("Title and content are required", "danger");
-        return;
+      pushNotification("Title and content are required", "danger");
+
+      return;
     }
 
-    const category = findCategoryByHashtag(hashtag);
-    const categories: number[] = [];
+    const matchedCategory = findCategoryByHashtag(hashtag);
+    const categoryIds = new Set<number>();
 
-    if (category) {
-      categories.push(category.id);
-      if (category.parent) {
-         // Also add parent if necessary, but CategoryCard logic 
-         // seems to handle multiple selections or just IDs.
-         // Based on CategoryCard logic: 
-         // setSelected((prev) => [...new Set([...prev, c.id, c.parent])]);
-         categories.push(category.parent);
-      }
-    } else {
-        if (hashtag) {
-            pushNotification(`Hashtag "${hashtag}" not found`, "warning");
-        }
+    if (matchedCategory) {
+      categoryIds.add(matchedCategory.id);
+    } else if (hashtag) {
+      pushNotification(`Hashtag "${hashtag}" not found`, "warning");
     }
-    
-    // Remove duplicates
-    const uniqueCategories = [...new Set(categories)];
 
     onImport({
       title,
       description: content,
-      categories: uniqueCategories,
+      categories: [...categoryIds],
     });
-    
   };
 
   return (
-    <Card className="w-full ">
-      <CardBody className="p-2 space-y-5">
-        <Textarea onChange={(e) => setJsonData(JSON.parse(e.target.value))} />
-        <JsonEditor
+    <Card className="w-full">
+      <CardBody className="space-y-5 p-2">
+        <Textarea
+          placeholder="Paste JSON here"
+          value={rawJson}
+          onChange={(event) => {
+            const input = event.target.value;
+
+            setRawJson(input);
+
+            if (!input.trim()) {
+              return;
+            }
+
+            try {
+              setJsonData(JSON.parse(input));
+            } catch {}
+          }}
+        />
+        <Suspense
+          fallback={
+            <div className="rounded-md border p-3 text-sm text-muted-foreground">
+              Loading JSON editor...
+            </div>
+          }
+        >
+          <JsonEditor
             className="w-full"
             data={jsonData}
-            setData={(d: any) => setJsonData(d)}
-        />
+            setData={(value: any) => setJsonData(value)}
+          />
+        </Suspense>
       </CardBody>
       <CardFooter>
         <Button className="w-full" color="primary" onPress={handleImport}>
-        Import from JSON
-      </Button>
+          Import from JSON
+        </Button>
       </CardFooter>
     </Card>
   );

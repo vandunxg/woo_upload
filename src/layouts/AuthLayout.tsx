@@ -3,17 +3,25 @@ import { GalleryVerticalEnd } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
-import { useAuthStore } from "@/store/authStore.ts";
+import { useAuthStore } from "@/store/authStore";
+import { useSiteStore } from "@/store/siteStore";
 
-export default function AuthLayout({ children }: any) {
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const navigate = useNavigate();
-  const token = useAuthStore((state) => state.token);
+  const activeSiteId = useSiteStore((state) => state.activeSiteId);
+  const hasValidSession = useAuthStore((state) =>
+    state.hasValidSession(activeSiteId),
+  );
 
   useEffect(() => {
-    if (token) {
+    if (activeSiteId && hasValidSession) {
       navigate("/");
     }
-  }, [token, navigate]);
+  }, [activeSiteId, hasValidSession, navigate]);
 
   return (
     <div className="bg-muted flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
