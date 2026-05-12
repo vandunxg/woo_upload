@@ -14,18 +14,10 @@ const TitleCard = () => {
       <CardBody>
         <Input
           isRequired
-          errorMessage={({ validationDetails, validationErrors }) => {
-            if (validationDetails.typeMismatch) {
-              return "Please enter a valid email address";
-            }
-
-            return validationErrors;
-          }}
-          // label="Title"
           labelPlacement="outside"
           name="title"
           placeholder="Enter product title"
-          type="title"
+          type="text"
           value={title}
           onChange={(e) => {
             setField("title", e.target.value);
