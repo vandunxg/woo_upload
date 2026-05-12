@@ -23,6 +23,7 @@ const DescriptionCard = () => {
         >
           <MDEditor
             data-color-mode="light"
+            height={420}
             value={description}
             onChange={(val) => setField("description", val ?? "")}
           />
