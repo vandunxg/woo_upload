@@ -13,6 +13,7 @@ const JsonEditor = lazy(() =>
 interface JsonImportProps {
   onImport: (data: {
     title: string;
+    short_description: string;
     description: string;
     categories: number[];
   }) => void;
@@ -29,6 +30,7 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
   const { categories } = useSiteCategories();
   const [jsonData, setJsonData] = useState({
     title: "Title",
+    short_description: "",
     content: "Content",
     hashtag: "Hashtag",
   });
@@ -66,7 +68,7 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
   };
 
   const handleImport = () => {
-    const { title, content, hashtag } = jsonData;
+    const { title, short_description, content, hashtag } = jsonData;
 
     if (!title || !content) {
       pushNotification("Title and content are required", "danger");
@@ -85,6 +87,7 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
 
     onImport({
       title,
+      short_description: short_description ?? "",
       description: content,
       categories: [...categoryIds],
     });

@@ -7,6 +7,7 @@ import DefaultLayout from "@/layouts/default";
 import CategoryCard from "@/components/CategoryCard";
 import UploadCard from "@/components/UploadCard";
 import DescriptionCard from "@/components/DescriptionCard";
+import ShortDescriptionCard from "@/components/ShortDescriptionCard";
 import TitleCard from "@/components/TitleCard";
 import { useSiteCategories } from "@/hooks/useSiteCategories";
 import { usePostStore } from "@/store/postStore";
@@ -21,6 +22,7 @@ export default function IndexPage() {
   const { categories: siteCategories } = useSiteCategories();
   const {
     title,
+    short_description,
     description,
     image,
     categories: selectedCategoryIds,
@@ -106,6 +108,7 @@ export default function IndexPage() {
 
       await createProduct({
         name: title,
+        short_description,
         description,
         categories: [...categoryIds].map((id) => ({ id })),
         imageId,
@@ -164,6 +167,7 @@ export default function IndexPage() {
               onImport={(data) => {
                 usePostStore.setState({
                   title: data.title,
+                  short_description: data.short_description,
                   description: data.description,
                   categories: data.categories,
                   empty: false,
@@ -172,6 +176,8 @@ export default function IndexPage() {
             />
 
             <TitleCard />
+
+            <ShortDescriptionCard />
 
             <DescriptionCard />
           </section>
@@ -195,6 +201,9 @@ export default function IndexPage() {
                   Category: {selectedCategoryIds.length ? "OK" : "-"}
                 </div>
                 <div className="rounded-md border p-2">
+                  Short Desc: {short_description ? "OK" : "-"}
+                </div>
+                <div className="rounded-md border p-2 col-span-2">
                   Description: {description ? "OK" : "-"}
                 </div>
               </div>

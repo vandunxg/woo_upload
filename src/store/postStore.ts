@@ -3,6 +3,7 @@ import { create } from "zustand";
 
 type PostFormData = {
   title: string;
+  short_description: string;
   description: string;
   image: File | null;
   categories: number[];
@@ -19,6 +20,7 @@ type PostStore = PostFormData & {
 
 export const usePostStore = create<PostStore>((set) => ({
   title: "",
+  short_description: "",
   description: "",
   image: null,
   categories: [],
@@ -27,6 +29,7 @@ export const usePostStore = create<PostStore>((set) => ({
   reset: () =>
     set({
       title: "",
+      short_description: "",
       description: "",
       image: null,
       categories: [],

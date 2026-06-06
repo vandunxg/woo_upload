@@ -17,6 +17,7 @@ type WPUser = {
 
 type CreateProductPayload = {
   name: string;
+  short_description?: string;
   description: string;
   categories: Array<{ id: number }>;
   imageId?: number;
@@ -55,11 +56,12 @@ export const wooApi = createApi({
       query: () => "wp/v2/users/me",
     }),
     createProduct: builder.mutation<any, CreateProductPayload>({
-      query: ({ name, description, categories, imageId }) => ({
+      query: ({ name, short_description, description, categories, imageId }) => ({
         url: "wc/v3/products",
         method: "POST",
         body: {
           name,
+          short_description: short_description ?? "",
           description,
           categories,
           images: imageId ? [{ id: imageId }] : [],
