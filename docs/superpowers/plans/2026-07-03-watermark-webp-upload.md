@@ -595,7 +595,7 @@ Run: `npm run dev`, open `http://localhost:5173`.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add package.json package-lock.json src/components/WatermarkSettingsModal.tsx src/components/navbar.tsx
+git add package.json src/components/WatermarkSettingsModal.tsx src/components/navbar.tsx
 git commit -m "feat: add watermark settings modal to navbar"
 ```
 
