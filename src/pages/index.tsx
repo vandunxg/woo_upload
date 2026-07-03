@@ -16,6 +16,8 @@ import {
   useUploadImageMutation,
 } from "@/services/wooApi";
 import { pushNotification } from "@/lib/utils";
+import { processProductImage } from "@/lib/imageProcessing";
+import { useWatermarkSettingsStore } from "@/store/watermarkSettingsStore";
 
 export default function IndexPage() {
   const [jsonImportKey, setJsonImportKey] = useState(0);
@@ -28,6 +30,7 @@ export default function IndexPage() {
     categories: selectedCategoryIds,
     reset,
   } = usePostStore();
+  const watermarkSettings = useWatermarkSettingsStore();
   const categoriesById = useMemo(
     () => new Map(siteCategories.map((category) => [category.id, category])),
     [siteCategories],
@@ -101,7 +104,15 @@ export default function IndexPage() {
       });
 
       if (image) {
-        const imageRes = await uploadImage({ file: image, title }).unwrap();
+        const processedImage = await processProductImage(
+          image,
+          title,
+          watermarkSettings,
+        );
+        const imageRes = await uploadImage({
+          file: processedImage,
+          title,
+        }).unwrap();
 
         imageId = imageRes.id;
       }
