@@ -30,7 +30,6 @@ export default function IndexPage() {
     categories: selectedCategoryIds,
     reset,
   } = usePostStore();
-  const watermarkSettings = useWatermarkSettingsStore();
   const categoriesById = useMemo(
     () => new Map(siteCategories.map((category) => [category.id, category])),
     [siteCategories],
@@ -107,7 +106,7 @@ export default function IndexPage() {
         const processedImage = await processProductImage(
           image,
           title,
-          watermarkSettings,
+          useWatermarkSettingsStore.getState(),
         );
         const imageRes = await uploadImage({
           file: processedImage,
