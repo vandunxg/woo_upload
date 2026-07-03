@@ -101,7 +101,7 @@ export default function IndexPage() {
       });
 
       if (image) {
-        const imageRes = await uploadImage(image).unwrap();
+        const imageRes = await uploadImage({ file: image, title }).unwrap();
 
         imageId = imageRes.id;
       }

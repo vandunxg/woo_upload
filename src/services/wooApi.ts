@@ -39,11 +39,18 @@ export const wooApi = createApi({
   reducerPath: "wooApi",
   baseQuery,
   endpoints: (builder) => ({
-    uploadImage: builder.mutation<{ id: number; source_url: string }, File>({
-      query: (file) => {
+    uploadImage: builder.mutation<
+      { id: number; source_url: string },
+      { file: File; title: string }
+    >({
+      query: ({ file, title }) => {
         const formData = new FormData();
 
         formData.append("file", file);
+        formData.append("title", title);
+        formData.append("alt_text", title);
+        formData.append("caption", title);
+        formData.append("description", title);
 
         return {
           url: "wp/v2/media",
