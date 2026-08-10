@@ -9,7 +9,7 @@ import { Button } from "@heroui/button";
 import { usePostStore } from "@/store/postStore";
 import { pushNotification } from "@/lib/utils";
 
-const MAX_SIZE_MB = 2;
+const MAX_SIZE_MB = 20;
 
 const extensionFromMime = (mime: string) => {
   const subtype = mime.split("/")[1] ?? "png";
