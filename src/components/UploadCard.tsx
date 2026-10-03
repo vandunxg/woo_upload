@@ -7,7 +7,7 @@ import { Image } from "@heroui/image";
 import { Button } from "@heroui/button";
 
 import { usePostStore } from "@/store/postStore";
-import { pushNotification } from "@/lib/utils";
+import { getClipboardImageFile, pushNotification } from "@/lib/utils";
 
 const MAX_SIZE_MB = 20;
 
@@ -67,7 +67,7 @@ const UploadCard = () => {
     const handlePaste = (event: ClipboardEvent) => {
       const clipboardData = event.clipboardData;
 
-      if (!clipboardData) return;
+      if (!clipboardData || event.defaultPrevented) return;
 
       const target = event.target as HTMLElement | null;
       const tag = target?.tagName;
@@ -76,18 +76,7 @@ const UploadCard = () => {
         tag === "TEXTAREA" ||
         (target?.isContentEditable ?? false);
 
-      let pastedFile: File | null = null;
-
-      for (const item of clipboardData.items) {
-        if (item.kind === "file" && item.type.startsWith("image/")) {
-          const file = item.getAsFile();
-
-          if (file) {
-            pastedFile = file;
-            break;
-          }
-        }
-      }
+      const pastedFile = getClipboardImageFile(clipboardData);
 
       if (!pastedFile) {
         return;

@@ -25,3 +25,19 @@ export function pushNotification(
     color: type,
   });
 }
+
+export const getClipboardImageFile = (
+  clipboardData: DataTransfer,
+): File | null => {
+  for (const item of clipboardData.items) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+
+      if (file) {
+        return file;
+      }
+    }
+  }
+
+  return null;
+};

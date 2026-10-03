@@ -18,6 +18,7 @@ import {
 import { pushNotification } from "@/lib/utils";
 import { processProductImage } from "@/lib/imageProcessing";
 import { useWatermarkSettingsStore } from "@/store/watermarkSettingsStore";
+import { useBackgroundSettingsStore } from "@/store/backgroundSettingsStore";
 
 export default function IndexPage() {
   const [jsonImportKey, setJsonImportKey] = useState(0);
@@ -107,6 +108,7 @@ export default function IndexPage() {
           image,
           title,
           useWatermarkSettingsStore.getState(),
+          useBackgroundSettingsStore.getState(),
         );
         const imageRes = await uploadImage({
           file: processedImage,
