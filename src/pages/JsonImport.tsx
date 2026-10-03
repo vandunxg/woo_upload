@@ -1,4 +1,11 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardFooter } from "@heroui/card";
 import { Textarea } from "@heroui/input";
@@ -9,6 +16,13 @@ import { pushNotification } from "@/lib/utils";
 const JsonEditor = lazy(() =>
   import("json-edit-react").then((module) => ({ default: module.JsonEditor })),
 );
+
+type ImportJson = {
+  title: string;
+  short_description: string;
+  content: string;
+  hashtag: string;
+};
 
 interface JsonImportProps {
   onImport: (data: {
@@ -26,9 +40,25 @@ const normalize = (value: string) =>
     .toLowerCase()
     .trim();
 
+// Only `{...}` counts as pasted JSON, so plain numbers/strings still paste
+// normally into other fields.
+const parseJsonObject = (text: string): ImportJson | null => {
+  const trimmed = text.trim();
+
+  if (!trimmed.startsWith("{")) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    return null;
+  }
+};
+
 const JsonImport = ({ onImport }: JsonImportProps) => {
   const { categories } = useSiteCategories();
-  const [jsonData, setJsonData] = useState({
+  const [jsonData, setJsonData] = useState<ImportJson>({
     title: "Title",
     short_description: "",
     content: "Content",
@@ -45,53 +75,90 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
     [categories],
   );
 
-  const findCategoryByHashtag = (hashtag: string) => {
-    if (!hashtag) {
-      return null;
-    }
+  const findCategoryByHashtag = useCallback(
+    (hashtag: string) => {
+      if (!hashtag) {
+        return null;
+      }
 
-    const normalizedHashtag = normalize(hashtag);
+      const normalizedHashtag = normalize(hashtag);
 
-    const exactMatch = normalizedCategories.find(
-      (category) => category.normalizedName === normalizedHashtag,
-    );
+      const exactMatch = normalizedCategories.find(
+        (category) => category.normalizedName === normalizedHashtag,
+      );
 
-    if (exactMatch) {
-      return exactMatch;
-    }
+      if (exactMatch) {
+        return exactMatch;
+      }
 
-    return (
-      normalizedCategories.find((category) =>
-        category.normalizedName.includes(normalizedHashtag),
-      ) ?? null
-    );
-  };
+      return (
+        normalizedCategories.find((category) =>
+          category.normalizedName.includes(normalizedHashtag),
+        ) ?? null
+      );
+    },
+    [normalizedCategories],
+  );
 
-  const handleImport = () => {
-    const { title, short_description, content, hashtag } = jsonData;
+  const importData = useCallback(
+    (data: ImportJson) => {
+      const { title, short_description, content, hashtag } = data;
 
-    if (!title || !content) {
-      pushNotification("Title and content are required", "danger");
+      if (!title || !content) {
+        pushNotification("Title and content are required", "danger");
 
-      return;
-    }
+        return false;
+      }
 
-    const matchedCategory = findCategoryByHashtag(hashtag);
-    const categoryIds = new Set<number>();
+      const matchedCategory = findCategoryByHashtag(hashtag);
+      const categoryIds = new Set<number>();
 
-    if (matchedCategory) {
-      categoryIds.add(matchedCategory.id);
-    } else if (hashtag) {
-      pushNotification(`Hashtag "${hashtag}" not found`, "warning");
-    }
+      if (matchedCategory) {
+        categoryIds.add(matchedCategory.id);
+      } else if (hashtag) {
+        pushNotification(`Hashtag "${hashtag}" not found`, "warning");
+      }
 
-    onImport({
-      title,
-      short_description: short_description ?? "",
-      description: content,
-      categories: [...categoryIds],
-    });
-  };
+      onImport({
+        title,
+        short_description: short_description ?? "",
+        description: content,
+        categories: [...categoryIds],
+      });
+
+      return true;
+    },
+    [findCategoryByHashtag, onImport],
+  );
+
+  useEffect(() => {
+    const handlePaste = (event: ClipboardEvent) => {
+      if (event.defaultPrevented) {
+        return;
+      }
+
+      const text = event.clipboardData?.getData("text/plain");
+      const parsed = text ? parseJsonObject(text) : null;
+
+      if (!text || !parsed) {
+        return;
+      }
+
+      event.preventDefault();
+      setRawJson(text.trim());
+      setJsonData(parsed);
+
+      if (importData(parsed)) {
+        pushNotification("Đã dán JSON từ clipboard", "success");
+      }
+    };
+
+    window.addEventListener("paste", handlePaste);
+
+    return () => {
+      window.removeEventListener("paste", handlePaste);
+    };
+  }, [importData]);
 
   return (
     <Card className="w-full">
@@ -128,7 +195,11 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
         </Suspense>
       </CardBody>
       <CardFooter>
-        <Button className="w-full" color="primary" onPress={handleImport}>
+        <Button
+          className="w-full"
+          color="primary"
+          onPress={() => importData(jsonData)}
+        >
           Import from JSON
         </Button>
       </CardFooter>
