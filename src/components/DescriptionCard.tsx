@@ -1,15 +1,17 @@
 import { lazy, Suspense } from "react";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 
+import { useFillHighlight } from "@/hooks/useFillHighlight";
 import { usePostStore } from "@/store/postStore";
 
 const MDEditor = lazy(() => import("@uiw/react-md-editor"));
 
 const DescriptionCard = () => {
   const { description, setField } = usePostStore();
+  const cardRef = useFillHighlight("description");
 
   return (
-    <Card className="w-full">
+    <Card ref={cardRef} className="w-full">
       <CardHeader>
         <h3 className="text-lg font-semibold">Description</h3>
       </CardHeader>

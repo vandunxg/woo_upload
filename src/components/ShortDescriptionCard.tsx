@@ -1,13 +1,15 @@
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Textarea } from "@heroui/input";
 
+import { useFillHighlight } from "@/hooks/useFillHighlight";
 import { usePostStore } from "@/store/postStore";
 
 const ShortDescriptionCard = () => {
   const { short_description, setField } = usePostStore();
+  const cardRef = useFillHighlight("short_description");
 
   return (
-    <Card className="w-full">
+    <Card ref={cardRef} className="w-full">
       <CardHeader>
         <h3 className="text-lg font-semibold">Short Description</h3>
       </CardHeader>

@@ -156,7 +156,7 @@ export default function IndexPage() {
               </p>
             </div>
             <div
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors duration-300 ${
                 isReadyToSubmit
                   ? "bg-emerald-100 text-emerald-700"
                   : "bg-amber-100 text-amber-700"
@@ -176,15 +176,7 @@ export default function IndexPage() {
           <section className="space-y-4">
             <JsonImport
               key={jsonImportKey}
-              onImport={(data) => {
-                usePostStore.setState({
-                  title: data.title,
-                  short_description: data.short_description,
-                  description: data.description,
-                  categories: data.categories,
-                  empty: false,
-                });
-              }}
+              onImport={(data) => usePostStore.getState().fill(data)}
             />
 
             <TitleCard />

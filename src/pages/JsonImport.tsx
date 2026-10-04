@@ -17,19 +17,15 @@ const JsonEditor = lazy(() =>
   import("json-edit-react").then((module) => ({ default: module.JsonEditor })),
 );
 
-type ImportJson = {
-  title: string;
-  short_description: string;
-  content: string;
-  hashtag: string;
-};
+type ImportJson = Record<string, unknown>;
 
 interface JsonImportProps {
+  // Only the fields the JSON actually has a value for are present.
   onImport: (data: {
-    title: string;
-    short_description: string;
-    description: string;
-    categories: number[];
+    title?: string;
+    short_description?: string;
+    description?: string;
+    categories?: number[];
   }) => void;
 }
 
@@ -39,6 +35,22 @@ const normalize = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .trim();
+
+// A key counts only when it holds a non-empty string or a number; anything
+// else (missing, null, "", objects) is skipped so it never wipes the form.
+const readText = (data: ImportJson, key: string) => {
+  const value = data[key];
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value !== "string" || !value.trim()) {
+    return undefined;
+  }
+
+  return value.trim();
+};
 
 // Only `{...}` counts as pasted JSON, so plain numbers/strings still paste
 // normally into other fields.
@@ -101,30 +113,53 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
   );
 
   const importData = useCallback(
-    (data: ImportJson) => {
-      const { title, short_description, content, hashtag } = data;
+    (data: unknown) => {
+      // The JSON editor can turn the root into a non-object.
+      const json: ImportJson =
+        data && typeof data === "object" && !Array.isArray(data)
+          ? (data as ImportJson)
+          : {};
+      const fields: Parameters<JsonImportProps["onImport"]>[0] = {};
+      const title = readText(json, "title");
+      const shortDescription = readText(json, "short_description");
+      const content = readText(json, "content");
+      const hashtag = readText(json, "hashtag");
 
-      if (!title || !content) {
-        pushNotification("Title and content are required", "danger");
+      if (title) {
+        fields.title = title;
+      }
+
+      if (shortDescription) {
+        fields.short_description = shortDescription;
+      }
+
+      if (content) {
+        fields.description = content;
+      }
+
+      if (hashtag) {
+        const matchedCategory = findCategoryByHashtag(hashtag);
+
+        if (matchedCategory) {
+          fields.categories = [matchedCategory.id];
+        } else {
+          pushNotification(`Hashtag "${hashtag}" not found`, "warning");
+        }
+      }
+
+      if (Object.keys(fields).length === 0) {
+        // An unmatched hashtag already explained itself.
+        if (!hashtag) {
+          pushNotification(
+            "Không có giá trị nào để import (title, short_description, content, hashtag)",
+            "warning",
+          );
+        }
 
         return false;
       }
 
-      const matchedCategory = findCategoryByHashtag(hashtag);
-      const categoryIds = new Set<number>();
-
-      if (matchedCategory) {
-        categoryIds.add(matchedCategory.id);
-      } else if (hashtag) {
-        pushNotification(`Hashtag "${hashtag}" not found`, "warning");
-      }
-
-      onImport({
-        title,
-        short_description: short_description ?? "",
-        description: content,
-        categories: [...categoryIds],
-      });
+      onImport(fields);
 
       return true;
     },
@@ -175,9 +210,11 @@ const JsonImport = ({ onImport }: JsonImportProps) => {
               return;
             }
 
-            try {
-              setJsonData(JSON.parse(input));
-            } catch {}
+            const parsed = parseJsonObject(input);
+
+            if (parsed) {
+              setJsonData(parsed);
+            }
           }}
         />
         <Suspense

@@ -5,6 +5,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Input } from "@heroui/input";
 
+import { useFillHighlight } from "@/hooks/useFillHighlight";
 import { useSiteCategories } from "@/hooks/useSiteCategories";
 import { usePostStore } from "@/store/postStore";
 
@@ -28,6 +29,7 @@ export default function CategoryCard() {
   const { categories, isLoading, isFetching } = useSiteCategories();
   const selectedCategoryIds = usePostStore((state) => state.categories);
   const setField = usePostStore((state) => state.setField);
+  const cardRef = useFillHighlight("categories");
 
   const selectedCategories = useMemo(
     () =>
@@ -56,7 +58,7 @@ export default function CategoryCard() {
   };
 
   return (
-    <Card className="w-full">
+    <Card ref={cardRef} className="w-full">
       <CardHeader>
         <div className="flex w-full items-center justify-between gap-2">
           <h3 className="text-lg font-semibold">Categories</h3>
@@ -78,7 +80,7 @@ export default function CategoryCard() {
         )}
 
         {selectedCategories.length > 0 && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 duration-300 animate-in fade-in-0 slide-in-from-top-1">
             <h4 className="text-sm font-semibold">Selected</h4>
             <div className="flex flex-wrap gap-2">
               {selectedCategories.map((category) => (
