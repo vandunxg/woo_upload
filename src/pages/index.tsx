@@ -11,14 +11,27 @@ import ShortDescriptionCard from "@/components/ShortDescriptionCard";
 import TitleCard from "@/components/TitleCard";
 import { useSiteCategories } from "@/hooks/useSiteCategories";
 import { usePostStore } from "@/store/postStore";
-import {
-  useCreateProductMutation,
-  useUploadImageMutation,
-} from "@/services/wooApi";
 import { pushNotification } from "@/lib/utils";
-import { processProductImage } from "@/lib/imageProcessing";
+import { useSiteStore } from "@/store/siteStore";
+import { useUploadQueueStore } from "@/store/uploadQueueStore";
+import { WatermarkSettings } from "@/types/watermark";
+import { BackgroundSettings } from "@/types/background";
 import { useWatermarkSettingsStore } from "@/store/watermarkSettingsStore";
 import { useBackgroundSettingsStore } from "@/store/backgroundSettingsStore";
+
+const pickWatermarkSettings = (): WatermarkSettings => {
+  const { enabled, logoDataUrl, opacity, sizePercent, position } =
+    useWatermarkSettingsStore.getState();
+
+  return { enabled, logoDataUrl, opacity, sizePercent, position };
+};
+
+const pickBackgroundSettings = (): BackgroundSettings => {
+  const { enabled, fit, color, width, height } =
+    useBackgroundSettingsStore.getState();
+
+  return { enabled, fit, color, width, height };
+};
 
 export default function IndexPage() {
   const [jsonImportKey, setJsonImportKey] = useState(0);
@@ -36,10 +49,6 @@ export default function IndexPage() {
     [siteCategories],
   );
 
-  const [uploadImage, { isLoading: loadingUploadImage }] =
-    useUploadImageMutation();
-  const [createProduct, { isLoading }] = useCreateProductMutation();
-  const isSubmitting = loadingUploadImage || isLoading;
   const missingFields = useMemo(() => {
     const missing: string[] = [];
 
@@ -63,7 +72,7 @@ export default function IndexPage() {
   }, [description, image, selectedCategoryIds.length, title]);
   const isReadyToSubmit = missingFields.length === 0;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     // validate
@@ -91,50 +100,40 @@ export default function IndexPage() {
       return;
     }
 
-    try {
-      let imageId: number | undefined;
-      const categoryIds = new Set<number>(selectedCategoryIds);
+    const site = useSiteStore.getState().getActiveSite();
 
-      selectedCategoryIds.forEach((categoryId) => {
-        const parentId = categoriesById.get(categoryId)?.parent;
+    if (!site) {
+      pushNotification("No active site selected", "danger");
 
-        if (parentId) {
-          categoryIds.add(parentId);
-        }
-      });
-
-      if (image) {
-        const processedImage = await processProductImage(
-          image,
-          title,
-          useWatermarkSettingsStore.getState(),
-          useBackgroundSettingsStore.getState(),
-        );
-        const imageRes = await uploadImage({
-          file: processedImage,
-          title,
-        }).unwrap();
-
-        imageId = imageRes.id;
-      }
-
-      await createProduct({
-        name: title,
-        short_description,
-        description,
-        categories: [...categoryIds].map((id) => ({ id })),
-        imageId,
-      }).unwrap();
-
-      reset();
-      setJsonImportKey((prev) => prev + 1);
-
-      pushNotification("Created successfully", "success");
-
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (err) {
-      pushNotification((err as Error).message, "danger");
+      return;
     }
+
+    const categoryIds = new Set<number>(selectedCategoryIds);
+
+    selectedCategoryIds.forEach((categoryId) => {
+      const parentId = categoriesById.get(categoryId)?.parent;
+
+      if (parentId) {
+        categoryIds.add(parentId);
+      }
+    });
+
+    useUploadQueueStore.getState().enqueue({
+      siteId: site.id,
+      siteName: site.name,
+      title,
+      short_description,
+      description,
+      categoryIds: [...categoryIds],
+      image,
+      watermark: pickWatermarkSettings(),
+      background: pickBackgroundSettings(),
+    });
+
+    reset();
+    setJsonImportKey((prev) => prev + 1);
+    pushNotification(`Queued "${title}" for upload`, "success");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleReset = () => {
@@ -213,12 +212,7 @@ export default function IndexPage() {
               </div>
 
               <div className="mt-4 space-y-2">
-                <Button
-                  className="w-full"
-                  color="primary"
-                  isLoading={isSubmitting}
-                  type="submit"
-                >
+                <Button className="w-full" color="primary" type="submit">
                   Publish Product
                 </Button>
                 <Button

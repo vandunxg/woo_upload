@@ -7,7 +7,7 @@ import {
   NavbarContent,
   NavbarItem,
 } from "@heroui/navbar";
-import { Settings } from "lucide-react";
+import { ListOrdered, Settings } from "lucide-react";
 
 import { pushNotification } from "@/lib/utils";
 import { useAuthStore } from "@/store/authStore";
@@ -15,6 +15,8 @@ import { useSiteStore } from "@/store/siteStore";
 import { Logo } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { WatermarkSettingsModal } from "@/components/WatermarkSettingsModal";
+import { UploadQueueModal } from "@/components/UploadQueueModal";
+import { useUploadQueueStore } from "@/store/uploadQueueStore";
 
 export const Navbar = () => {
   const navigate = useNavigate();
@@ -23,6 +25,10 @@ export const Navbar = () => {
   const setActiveSite = useSiteStore((state) => state.setActiveSite);
   const logoutSite = useAuthStore((state) => state.logoutSite);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const jobs = useUploadQueueStore((state) => state.jobs);
+  const activeJobCount = jobs.filter((job) => job.status !== "failed").length;
+  const failedJobCount = jobs.length - activeJobCount;
 
   const activeSite = useMemo(
     () => sites.find((site) => site.id === activeSiteId) ?? null,
@@ -72,6 +78,26 @@ export const Navbar = () => {
               ))}
             </select>
             <Button
+              aria-label="Upload queue"
+              className="gap-1.5"
+              size="sm"
+              title="Upload queue"
+              variant="outline"
+              onClick={() => setIsQueueOpen(true)}
+            >
+              <ListOrdered className="h-4 w-4" />
+              {activeJobCount > 0 && (
+                <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold leading-4 text-primary-foreground">
+                  {activeJobCount}
+                </span>
+              )}
+              {failedJobCount > 0 && (
+                <span className="rounded-full bg-red-500 px-1.5 text-[10px] font-semibold leading-4 text-white">
+                  {failedJobCount}
+                </span>
+              )}
+            </Button>
+            <Button
               size="sm"
               variant="outline"
               onClick={() => setIsSettingsOpen(true)}
@@ -93,6 +119,10 @@ export const Navbar = () => {
       <WatermarkSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+      <UploadQueueModal
+        isOpen={isQueueOpen}
+        onClose={() => setIsQueueOpen(false)}
       />
     </>
   );
